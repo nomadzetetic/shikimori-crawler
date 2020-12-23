@@ -1,10 +1,10 @@
 ﻿using HtmlAgilityPack;
 using HtmlAgilityPack.CssSelectors.NetCore;
-using shikimori.agent.models;
+using Shikimori.Agent.Models;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace shikimori.agent.parsers
+namespace Shikimori.Agent.Parsers
 {
     public static class VideoDetailsParser
     {

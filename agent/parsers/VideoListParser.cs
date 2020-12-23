@@ -3,7 +3,7 @@ using HtmlAgilityPack.CssSelectors.NetCore;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace shikimori.agent.parsers
+namespace Shikimori.Agent.Parsers
 {
     public class VideoListParser
     {

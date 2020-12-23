@@ -1,11 +1,11 @@
 ﻿using HtmlAgilityPack;
-using shikimori.agent.models;
-using shikimori.agent.parsers;
+using Shikimori.Agent.Models;
+using Shikimori.Agent.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace shikimori.agent
+namespace Shikimori.Agent
 {
     public class Agent
     {

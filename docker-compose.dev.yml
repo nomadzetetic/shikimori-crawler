@@ -1,0 +1,13 @@
+version: '3.6'
+services:
+  db:
+    image: postgres
+    container_name: postgres
+    environment:
+      - POSTGRES_DB=shikimori
+      - POSTGRES_USER=shikimori
+      - POSTGRES_PASSWORD=shikimori
+    ports:
+      - 5432:5435
+    volumes:
+      - ./postgres:/var/lib/postgresql/data

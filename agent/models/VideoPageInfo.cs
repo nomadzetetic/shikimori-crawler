@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace shikimori.agent.models
+namespace Shikimori.Agent.Models
 {
     public class VideoPageInfo
     {
