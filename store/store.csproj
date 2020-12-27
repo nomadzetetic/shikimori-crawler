@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <AssemblyName>shikimori.store</AssemblyName>
+    <RootNamespace>Shikimori.Store</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\data\data.csproj" />
+  </ItemGroup>
+
+</Project>

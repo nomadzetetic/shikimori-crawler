@@ -1,64 +1,52 @@
 ﻿using HtmlAgilityPack;
 using Shikimori.Agent.Models;
-using Shikimori.Agent.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Shikimori.Agent
 {
-    public class Agent
+    public class Agent : IAgent
     {
-        private readonly HtmlWeb web;
-        private const string animesFirstPageUrl = "https://shikimori.one/animes";
-
-        public Agent(HtmlWeb web)
-        {
-            this.web = web;
-        }
-
-        private async Task<HtmlDocument> LoadAnimesFirstPageAsync() => await LoadUrlAsync(animesFirstPageUrl);
+        private readonly HtmlWeb _web = new HtmlWeb();
+        private readonly IParser _parser = new Parser();
 
         private async Task<HtmlDocument> LoadUrlAsync(string url)
         {
             Console.WriteLine("Loading url: {0}", url);
-            var doc = await web.LoadFromWebAsync(url);
+            var doc = await _web.LoadFromWebAsync(url);
             await Task.Delay(300); // Special delay to be slower othewise might work nginx DDOS protection
             return doc;
         }
 
-        private async Task<VideoPageInfo> GetAnimeDetails(string url)
+        private async Task<VideoInfo> LoadAnimeDetails(string url)
         {
             var html = await LoadUrlAsync(url);
-            var videoPageInfo = VideoDetailsParser.FromHtmlNode(html.DocumentNode);
+            var videoPageInfo = _parser.ParseVideoPage(html.DocumentNode);
             return videoPageInfo;
         }
 
-        private async Task StoreResults(List<VideoPageInfo> itemsToSave)
+        public async Task<PageInfo> ScanPageAsync(string startUrl = "https://shikimori.one/animes")
         {
+            var html = await LoadUrlAsync(startUrl);
+            var videosInfos = new List<VideoInfo>();
+            var urls = _parser.ParseVideosUrls(html.DocumentNode);
 
-        }
-
-        public async Task ScanAsync()
-        {
-            var html = await LoadAnimesFirstPageAsync();
-            var nextPageUrl = VideoListParser.GetNextPageUrl(html);
-
-            while (nextPageUrl != null)
+            foreach (var url in urls)
             {
-                var itemsToSave = new List<VideoPageInfo>();
-                var urls = VideoListParser.GetVideosUrls(html);
-                foreach (var url in urls)
-                {
-                    var animeDetails = await GetAnimeDetails(url);
-                    itemsToSave.Add(animeDetails);
-                }
-
-                await StoreResults(itemsToSave);
-
-                html = await LoadUrlAsync(nextPageUrl);
-                nextPageUrl = null; // VideoListPageParser.GetNextPageUrl(html);
+                var videoInfo = await LoadAnimeDetails(url);
+                videosInfos.Add(videoInfo);
             }
+
+            var nextPageUrl = _parser.ParseNextPageUrl(html.DocumentNode);
+
+            var pageInfo = new PageInfo
+            {
+                NextPageUrl = nextPageUrl,
+                VideosInfos = videosInfos
+            };
+
+            return pageInfo;
         }
     }
 }

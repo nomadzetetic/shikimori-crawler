@@ -2,7 +2,7 @@
 
 namespace Shikimori.Agent.Models
 {
-    public class VideoPageInfo
+    public class VideoInfo
     {
         public MultilangValue Title { get; set; }
 
@@ -17,6 +17,6 @@ namespace Shikimori.Agent.Models
 
         public string Description { get; set; }
 
-        public List<MultilangValue> Genres { get; set; }
+        public List<MultilangValue> Genres { get; set; } = new List<MultilangValue>();
     }
 }

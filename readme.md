@@ -3,7 +3,7 @@
 ## Generate migration
 
 - Execute `cd ./data`
-- Execute `dotnet ef --startup-project ../app migrations add <MigrationName> -v`
+- Execute `dotnet-ef --startup-project ../app migrations add <MigrationName> -v`
 
 ## Docker
 

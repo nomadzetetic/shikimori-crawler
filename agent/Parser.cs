@@ -4,33 +4,11 @@ using Shikimori.Agent.Models;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Shikimori.Agent.Parsers
+namespace Shikimori.Agent
 {
-    public static class VideoDetailsParser
+    public class Parser : IParser
     {
-        public static VideoPageInfo FromHtmlNode(HtmlNode node)
-        {
-            var url = GetUrl(node);
-            var title = GetTitle(node);
-            var type = GetType(node);
-            var genres = GetGenres(node);
-            var duration = GetAnimeDuration(node);
-            var description = GetDescription(node);
-
-            var animeDetails = new VideoPageInfo
-            {
-                Url = url,
-                Title = title,
-                Type = type,
-                Genres = genres,
-                Duration = duration,
-                Description = description
-            };
-
-            return animeDetails;
-        }
-
-        private static MultilangValue GetTitle(HtmlNode node)
+        private MultilangValue GetTitle(HtmlNode node)
         {
             var titleRaw = node.QuerySelector("h1").InnerText.Trim() ?? string.Empty;
             if (titleRaw.Contains("/"))
@@ -50,7 +28,7 @@ namespace Shikimori.Agent.Parsers
             };
         }
 
-        private static List<MultilangValue> GetGenres(HtmlNode node)
+        private List<MultilangValue> GetGenres(HtmlNode node)
         {
             var genres = node.QuerySelectorAll(".c-about .c-info-left [itemprop=\"genre\"]").Select(node =>
             {
@@ -68,10 +46,10 @@ namespace Shikimori.Agent.Parsers
             return genres;
         }
 
-        private static string GetType(HtmlNode node) =>
+        private string GetType(HtmlNode node) =>
             node.QuerySelector("meta[property=\"og:type\"]").GetAttributeValue("content", string.Empty);
 
-        private static int GetAnimeDuration(HtmlNode node)
+        private int GetAnimeDuration(HtmlNode node)
         {
             var textValue = node.QuerySelector("meta[property=\"video:duration\"]").GetAttributeValue("content", string.Empty);
             if (int.TryParse(textValue, out int duration))
@@ -82,10 +60,50 @@ namespace Shikimori.Agent.Parsers
             return 0;
         }
 
-        private static string GetUrl(HtmlNode node) =>
+        private string GetUrl(HtmlNode node) =>
             node.QuerySelector("meta[property=\"og:url\"]").GetAttributeValue("content", string.Empty);
 
-        private static string GetDescription(HtmlNode node) =>
+        private string GetDescription(HtmlNode node) =>
             node.QuerySelector(".russian [itemprop=\"description\"]").InnerText.Trim().Replace("\n", " ").Replace("  ", " ");
+
+        public VideoInfo ParseVideoPage(HtmlNode node)
+        {
+            var url = GetUrl(node);
+            var title = GetTitle(node);
+            var type = GetType(node);
+            var genres = GetGenres(node);
+            var duration = GetAnimeDuration(node);
+            var description = GetDescription(node);
+
+            var animeDetails = new VideoInfo
+            {
+                Url = url,
+                Title = title,
+                Type = type,
+                Genres = genres,
+                Duration = duration,
+                Description = description
+            };
+
+            return animeDetails;
+        }
+
+        public string ParseNextPageUrl(HtmlNode node)
+        {
+            var nextLink = node.QuerySelector(".link.link-next");
+            if (nextLink != null && !nextLink.HasClass("disabled"))
+            {
+                return nextLink.GetAttributeValue("href", null);
+            }
+
+            return null;
+        }
+
+        public List<string> ParseVideosUrls(HtmlNode node)
+        {
+            var links = node.QuerySelectorAll("[data-dynamic=\"cutted_covers\"] a.cover");
+            var urls = links.Select(link => link.GetAttributeValue("href", null)).Where(url => !string.IsNullOrWhiteSpace(url)).ToList();
+            return urls;
+        }
     }
 }

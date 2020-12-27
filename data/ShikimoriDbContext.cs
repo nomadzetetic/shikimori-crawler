@@ -11,6 +11,7 @@ namespace Shikimori.Data
 
         public DbSet<Genre> Genres { get; set; }
         public DbSet<Video> Videos { get; set; }
+        public DbSet<Setting> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,13 @@ namespace Shikimori.Data
                 entity.Property(x => x.TitleRus).HasMaxLength(500);
                 entity.Property(x => x.TitleEng).HasMaxLength(500);
                 entity.Property(x => x.Description).HasColumnType("text");
+            });
+
+            modelBuilder.Entity<Setting>(entity =>
+            {
+                entity.HasKey(x => x.Key);
+                entity.Property(x => x.Key).HasMaxLength(100);
+                entity.Property(x => x.Value).HasMaxLength(500);
             });
         }
     }
