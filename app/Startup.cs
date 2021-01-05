@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Shikimori.Agent;
+using Shikimori.App.Services;
 using Shikimori.Data;
+using Shikimori.Store;
 using System;
 
-namespace app
+namespace Shikimori.App
 {
     public class Startup
     {
@@ -23,13 +25,18 @@ namespace app
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            var databaseConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
+
             services.AddCors();
             services.AddHttpContextAccessor();
             services.AddDbContext<ShikimoriDbContext>(options =>
             {
-                var databaseConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
                 options.UseNpgsql(databaseConnectionString, builder => { builder.MigrationsAssembly("shikimori.data"); });
             });
+            services.AddScoped<IDatabaseStore, DatabaseStore>();
+            services.AddScoped<ILoader, Loader>();
+            services.AddSingleton<IAgentService, AgentService>();
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -49,15 +56,12 @@ namespace app
               .AllowAnyMethod()
               .AllowAnyHeader()
             );
-
+            app.UseStaticFiles();
             app.UseRouting();
-
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Hello World!");
-                });
+                endpoints.MapRazorPages();
+                endpoints.MapControllers();
             });
         }
     }

@@ -4,6 +4,8 @@
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>ae73335d-2fb7-4c67-a000-a9a9509141bf</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <AssemblyName>shikimori.app</AssemblyName>
+    <RootNamespace>Shikimori.App</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\agent\agent.csproj" />
     <ProjectReference Include="..\data\data.csproj" />
+    <ProjectReference Include="..\store\store.csproj" />
   </ItemGroup>
 
 </Project>

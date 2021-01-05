@@ -8,7 +8,7 @@ namespace Shikimori.Agent
 {
     public class Parser : IParser
     {
-        private MultilangValue GetTitle(HtmlNode node)
+        private static MultilangValue GetTitle(HtmlNode node)
         {
             var titleRaw = node.QuerySelector("h1").InnerText.Trim() ?? string.Empty;
             if (titleRaw.Contains("/"))
@@ -28,30 +28,29 @@ namespace Shikimori.Agent
             };
         }
 
-        private List<MultilangValue> GetGenres(HtmlNode node)
+        private static Dictionary<string, string> GetGenres(HtmlNode node)
         {
-            var genres = node.QuerySelectorAll(".c-about .c-info-left [itemprop=\"genre\"]").Select(node =>
-            {
-                var eng = node.QuerySelector(".genre-en").InnerText.Trim();
-                var ru = node.QuerySelector(".genre-ru").InnerText.Trim();
-
-                return new MultilangValue
+            var genres = node.QuerySelectorAll(".c-about .c-info-left [itemprop=\"genre\"]")
+                .Aggregate(new Dictionary<string, string>(), (acc, genreNode) =>
                 {
-                    Eng = eng,
-                    Ru = ru
-                };
-
-            }).ToList();
+                    var key = genreNode.QuerySelector(".genre-en")?.InnerText?.Trim() ?? null;
+                    var value = genreNode.QuerySelector(".genre-ru")?.InnerText?.Trim() ?? null;
+                    if (key != null && !acc.ContainsKey(key))
+                    {
+                        acc.Add(key, value);
+                    }
+                    return acc;
+                });
 
             return genres;
         }
 
-        private string GetType(HtmlNode node) =>
-            node.QuerySelector("meta[property=\"og:type\"]").GetAttributeValue("content", string.Empty);
+        private static string GetType(HtmlNode node) =>
+            node.QuerySelector("meta[property=\"og:type\"]")?.GetAttributeValue("content", string.Empty) ?? string.Empty;
 
-        private int GetAnimeDuration(HtmlNode node)
+        private static int GetAnimeDuration(HtmlNode node)
         {
-            var textValue = node.QuerySelector("meta[property=\"video:duration\"]").GetAttributeValue("content", string.Empty);
+            var textValue = node.QuerySelector("meta[property=\"video:duration\"]")?.GetAttributeValue("content", string.Empty) ?? "0";
             if (int.TryParse(textValue, out int duration))
             {
                 return duration;
@@ -60,11 +59,14 @@ namespace Shikimori.Agent
             return 0;
         }
 
-        private string GetUrl(HtmlNode node) =>
-            node.QuerySelector("meta[property=\"og:url\"]").GetAttributeValue("content", string.Empty);
+        private static string GetUrl(HtmlNode node) =>
+            node.QuerySelector("meta[property=\"og:url\"]")?.GetAttributeValue("content", string.Empty) ?? string.Empty;
 
-        private string GetDescription(HtmlNode node) =>
-            node.QuerySelector(".russian [itemprop=\"description\"]").InnerText.Trim().Replace("\n", " ").Replace("  ", " ");
+        private static string GetDescription(HtmlNode node) =>
+            node.QuerySelector(".russian [itemprop=\"description\"]")?.InnerText?.Trim()?.Replace("\n", " ")?.Replace("  ", " ") ?? string.Empty;
+
+        private static string GetImageUrl(HtmlNode node) =>
+            node.QuerySelector("meta[property=\"og:image\"]")?.GetAttributeValue("content", string.Empty) ?? string.Empty;
 
         public VideoInfo ParseVideoPage(HtmlNode node)
         {
@@ -74,6 +76,7 @@ namespace Shikimori.Agent
             var genres = GetGenres(node);
             var duration = GetAnimeDuration(node);
             var description = GetDescription(node);
+            var imageUrl = GetImageUrl(node);
 
             var animeDetails = new VideoInfo
             {
@@ -82,7 +85,8 @@ namespace Shikimori.Agent
                 Type = type,
                 Genres = genres,
                 Duration = duration,
-                Description = description
+                Description = description,
+                ImageUrl = imageUrl
             };
 
             return animeDetails;
@@ -101,8 +105,12 @@ namespace Shikimori.Agent
 
         public List<string> ParseVideosUrls(HtmlNode node)
         {
-            var links = node.QuerySelectorAll("[data-dynamic=\"cutted_covers\"] a.cover");
+            var links = node.QuerySelectorAll("[data-dynamic=\"cutted_covers\"] .cover");
             var urls = links.Select(link => link.GetAttributeValue("href", null)).Where(url => !string.IsNullOrWhiteSpace(url)).ToList();
+
+            if (urls.Count == 0)
+                urls = links.Select(link => link.GetAttributeValue("data-href", null)).Where(url => !string.IsNullOrWhiteSpace(url)).ToList();
+
             return urls;
         }
     }

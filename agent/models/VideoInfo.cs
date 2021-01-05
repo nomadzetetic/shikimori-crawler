@@ -9,6 +9,7 @@ namespace Shikimori.Agent.Models
         public string Type { get; set; }
 
         public string Url { get; set; }
+        public string ImageUrl { get; set; }
 
         /// <summary>
         /// Duration in seconds
@@ -17,6 +18,6 @@ namespace Shikimori.Agent.Models
 
         public string Description { get; set; }
 
-        public List<MultilangValue> Genres { get; set; } = new List<MultilangValue>();
+        public Dictionary<string, string> Genres { get; set; }
     }
 }

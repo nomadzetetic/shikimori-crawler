@@ -9,26 +9,20 @@ namespace Shikimori.Data
         {
         }
 
-        public DbSet<Genre> Genres { get; set; }
         public DbSet<Video> Videos { get; set; }
         public DbSet<Setting> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Genre>(entity =>
-            {
-                entity.HasKey(x => x.Key);
-                entity.Property(x => x.Key).HasMaxLength(100);
-                entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            });
-
             modelBuilder.Entity<Video>(entity =>
             {
                 entity.HasKey(x => x.Url);
                 entity.Property(x => x.Url).HasMaxLength(1000);
+                entity.Property(x => x.ImageUrl).HasMaxLength(1000);
                 entity.Property(x => x.TitleRus).HasMaxLength(500);
                 entity.Property(x => x.TitleEng).HasMaxLength(500);
                 entity.Property(x => x.Description).HasColumnType("text");
+                entity.Property(x => x.Genres).HasColumnType("jsonb");
             });
 
             modelBuilder.Entity<Setting>(entity =>

@@ -2,28 +2,34 @@
 using Shikimori.Agent.Models;
 using Shikimori.Data;
 using Shikimori.Data.Models;
+using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Shikimori.Store
 {
     public class DatabaseStore : IDatabaseStore
     {
-        private ShikimoriDbContext _dbContext;
+        private const string NEXT_PAGE_URL_KEY = "NEXT_PAGE_URL";
+        private const string NEXT_PAGE_URL_DEFAULT_VALUE = "https://shikimori.one/animes";
+
+        private readonly ShikimoriDbContext _dbContext;
 
         public DatabaseStore(ShikimoriDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public async Task<Setting> GetSettingAsync(string key)
+        public async Task<string> GetNextPageUrlAsync()
         {
-            var setting = await _dbContext.Settings.FirstOrDefaultAsync(x => x.Key == key);
-            return setting;
+            var setting = await _dbContext.Settings.FirstOrDefaultAsync(x => x.Key == NEXT_PAGE_URL_KEY);
+            return string.IsNullOrWhiteSpace(setting?.Value) ? NEXT_PAGE_URL_DEFAULT_VALUE : setting.Value;
         }
 
-        public async Task<Setting> SaveOrUpdateSettingAsync(string key, string value)
+        public Task<Setting> SaveOrUpdateNextPageUrlAsync(string value) => SaveOrUpdateSettingAsync(NEXT_PAGE_URL_KEY, value);
+
+        private async Task<Setting> SaveOrUpdateSettingAsync(string key, string value)
         {
             using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot);
             try
@@ -56,50 +62,47 @@ namespace Shikimori.Store
             }
         }
 
-        public async Task<Video> SaveOrUpdateVideoAsync(VideoInfo videoPageInfo)
+        public async Task SaveOrUpdateVideosAsync(List<VideoInfo> videosInfo)
         {
             using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot);
             try
             {
-                var video = await _dbContext.Videos.FirstOrDefaultAsync(x => x.Url == videoPageInfo.Url);
-
-                if (video == null)
+                foreach (var videoInfo in videosInfo)
                 {
-                    video = new Video
+                    var video = await _dbContext.Videos.FirstOrDefaultAsync(x => x.Url == videoInfo.Url);
+
+                    if (video == null)
                     {
-                        Url = videoPageInfo.Url,
-                        Description = videoPageInfo.Description,
-                        Duration = videoPageInfo.Duration,
-                        TitleEng = videoPageInfo.Title.Eng,
-                        TitleRus = videoPageInfo.Title.Ru,
-                        Genres = videoPageInfo.Genres.Select(x => new Genre
+                        video = new Video
                         {
-                            Key = x.Eng,
-                            Name = x.Ru
-                        }).ToList()
-                    };
-                    await _dbContext.Videos.AddAsync(video);
-                }
-                else
-                {
-                    video.Description = videoPageInfo.Description;
-                    video.Duration = videoPageInfo.Duration;
-                    video.TitleEng = videoPageInfo.Title.Eng;
-                    video.TitleRus = videoPageInfo.Title.Ru;
-                    video.Genres = videoPageInfo.Genres.Select(x => new Genre
+                            Url = videoInfo.Url,
+                            Description = videoInfo.Description,
+                            Duration = videoInfo.Duration,
+                            TitleEng = videoInfo.Title.Eng,
+                            TitleRus = videoInfo.Title.Ru,
+                            Genres = videoInfo.Genres,
+                            ImageUrl = videoInfo.ImageUrl
+                        };
+
+                        await _dbContext.Videos.AddAsync(video);
+                    }
+                    else
                     {
-                        Key = x.Eng,
-                        Name = x.Ru
-                    }).ToList();
+                        video.Description = videoInfo.Description;
+                        video.Duration = videoInfo.Duration;
+                        video.TitleEng = videoInfo.Title.Eng;
+                        video.TitleRus = videoInfo.Title.Ru;
+                        video.Genres = videoInfo.Genres;
+                        video.ImageUrl = videoInfo.ImageUrl;
+                    }
+
+                    await _dbContext.SaveChangesAsync();
                 }
-
-                await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
-
-                return video;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 await transaction.RollbackAsync();
                 throw;
             }

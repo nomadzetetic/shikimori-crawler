@@ -1,0 +1,28 @@
+﻿@page
+@model Shikimori.App.Pages.IndexModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    var statusClass = Model.Running ? "status-indicator status-indicator-green" : "status-indicator status-indicator-red";
+    var statusText = Model.Running ? "Работаю в поте лица" : "Лежу на диване";
+}
+
+<html>
+<head>
+    <link rel="stylesheet" href="~/styles/index.css">
+</head>
+<body>
+    <div class="container">
+        <form method="post">
+            <input asp-for="NextPageUrl" placeholder="https://shikimori.one/animes" class="form-input" />
+            <button type="submit" asp-page-handler="Start">Start</button>
+            <button type="submit" asp-page-handler="Stop">Stop</button>
+        </form>
+        <div class="status">
+            <div class="@statusClass"></div>
+            <span class="status-text">@statusText</span>
+        </div>
+    </div>
+    <script src="~/scripts/index.js"></script>
+</body>
+</html>
+
